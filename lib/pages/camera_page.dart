@@ -659,6 +659,10 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   }
 
   Widget _buildCaptureButtons() {
+    final hasImage = _imageBytes != null;
+    final hasText = _contextController.text.trim().isNotEmpty;
+    final canAnalyze = hasImage || hasText;
+
     return Column(
       children: [
         Row(
@@ -681,22 +685,32 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           ],
         ),
         const SizedBox(height: 16),
-        // Text-only analyze button
+        // Dynamic analyze button
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _isAnalyzing || _contextController.text.trim().isEmpty
+          child: ElevatedButton.icon(
+            onPressed: _isAnalyzing || !canAnalyze
                 ? null
-                : _analyzeTextOnly,
-            icon: const Icon(Icons.text_fields),
-            label: const Text('Analyze with Text Only'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF00E676),
-              side: BorderSide(
-                color: _contextController.text.trim().isEmpty
-                    ? Colors.grey.withOpacity(0.3)
-                    : const Color(0xFF00E676).withOpacity(0.5),
-              ),
+                : () {
+                    if (hasImage) {
+                      _analyzeImage();
+                    } else {
+                      _analyzeTextOnly();
+                    }
+                  },
+            icon: Icon(hasImage ? Icons.auto_awesome : Icons.text_fields),
+            label: Text(
+              hasImage
+                  ? (hasText ? 'Analyze with Context' : 'Analyze Photo')
+                  : 'Analyze with Text Only',
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: canAnalyze
+                  ? const Color(0xFF00E676)
+                  : Colors.grey.withOpacity(0.3),
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.grey.withOpacity(0.2),
+              disabledForegroundColor: Colors.grey,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -704,11 +718,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        if (_contextController.text.trim().isEmpty)
+        if (!canAnalyze)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Enter food description above to use text-only mode',
+              'Take a photo or enter a food description to analyze',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.4),
                 fontSize: 12,
