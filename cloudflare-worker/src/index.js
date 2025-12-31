@@ -24,7 +24,7 @@ export default {
     }
 
     try {
-      const { image, mimeType } = await request.json();
+      const { image, mimeType, context } = await request.json();
 
       if (!image) {
         return new Response(JSON.stringify({ error: 'No image provided' }), {
@@ -35,6 +35,11 @@ export default {
           },
         });
       }
+
+      // Build the user context section if provided
+      const userContextSection = context 
+        ? `\n\nUSER PROVIDED CONTEXT (use this to improve accuracy):\n"${context}"\nConsider this information when identifying the food, brand, portion size, or calculating nutrition.`
+        : '';
 
       // Call Gemini API with Google Search grounding enabled
       const geminiResponse = await fetch(
@@ -49,7 +54,7 @@ export default {
               {
                 parts: [
                   {
-                    text: `You are a nutrition expert assistant with access to Google Search. Analyze this food image and provide accurate nutritional information.
+                    text: `You are a nutrition expert assistant with access to Google Search. Analyze this food image and provide accurate nutritional information.${userContextSection}
 
 IMPORTANT: Use Google Search to look up the EXACT nutritional facts for this specific food product or dish. If you can identify a brand name, product packaging, or specific restaurant/chain food, search for the official nutritional information.
 
@@ -58,15 +63,16 @@ Steps:
 2. Search Google for the official nutritional facts for this specific item
 3. If it's a branded product (like Pringles, Oreos, McDonald's, etc.), find the exact nutrition label data
 4. If it's a homemade dish, search for standard nutritional estimates
+5. If the user specified a portion (e.g., "ate half", "2 servings"), adjust the nutrition values accordingly
 
 Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks, just raw JSON):
 {
   "food_name": "Specific name of the food (include brand if applicable)",
-  "calories": exact calories as integer,
+  "calories": exact calories as integer (adjusted for portion if specified),
   "protein": protein in grams as number,
   "carbs": carbohydrates in grams as number,
   "fat": fat in grams as number,
-  "serving_size": "the serving size these values are for",
+  "serving_size": "the serving size these values are for (reflect actual portion eaten if specified)",
   "confidence": "high/medium/low",
   "source": "where you found this nutritional data (e.g., 'Official Pringles nutrition label', 'USDA database', etc.)",
   "notes": "any additional relevant info (fiber, sugar, sodium if notable)"

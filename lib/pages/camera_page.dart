@@ -14,6 +14,7 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _contextController = TextEditingController();
   XFile? _imageFile;
   Uint8List? _imageBytes;
   bool _isAnalyzing = false;
@@ -38,6 +39,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _pulseController.dispose();
+    _contextController.dispose();
     super.dispose();
   }
 
@@ -76,8 +78,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     try {
       final base64Image = base64Encode(_imageBytes!);
       final mimeType = _imageFile?.mimeType ?? 'image/jpeg';
+      final additionalContext = _contextController.text.trim();
 
-      final analysis = await GeminiService.analyzeFood(base64Image, mimeType: mimeType);
+      final analysis = await GeminiService.analyzeFood(
+        base64Image,
+        mimeType: mimeType,
+        additionalContext: additionalContext.isNotEmpty
+            ? additionalContext
+            : null,
+      );
 
       setState(() {
         _analysis = analysis;
@@ -110,7 +119,9 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             content: const Text('Food logged successfully!'),
             backgroundColor: const Color(0xFF00E676),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         Navigator.pop(context, true);
@@ -135,11 +146,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A0E21),
-              Color(0xFF1A1A2E),
-              Color(0xFF0A0E21),
-            ],
+            colors: [Color(0xFF0A0E21), Color(0xFF1A1A2E), Color(0xFF0A0E21)],
           ),
         ),
         child: SafeArea(
@@ -152,10 +159,13 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   child: Column(
                     children: [
                       _buildImagePreview(),
+                      const SizedBox(height: 16),
+                      _buildContextInput(),
                       const SizedBox(height: 24),
                       if (_isAnalyzing) _buildAnalyzingIndicator(),
                       if (_error != null) _buildErrorCard(),
-                      if (_analysis != null && !_isAnalyzing) _buildAnalysisCard(),
+                      if (_analysis != null && !_isAnalyzing)
+                        _buildAnalysisCard(),
                       const SizedBox(height: 24),
                       _buildCaptureButtons(),
                     ],
@@ -216,17 +226,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: const Color(0xFF1D1E33),
-        border: Border.all(
-          color: const Color(0xFF00E676).withOpacity(0.2),
-        ),
+        border: Border.all(color: const Color(0xFF00E676).withOpacity(0.2)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: _imageBytes != null
-            ? Image.memory(
-                _imageBytes!,
-                fit: BoxFit.cover,
-              )
+            ? Image.memory(_imageBytes!, fit: BoxFit.cover)
             : Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -263,6 +268,45 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildContextInput() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF1D1E33),
+        border: Border.all(color: const Color(0xFF00E676).withOpacity(0.2)),
+      ),
+      child: TextField(
+        controller: _contextController,
+        style: const TextStyle(color: Colors.white),
+        maxLines: 2,
+        decoration: InputDecoration(
+          hintText: 'Add details: brand, portion eaten, ingredients...',
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.3),
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.info_outline,
+            color: const Color(0xFF00E676).withOpacity(0.5),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        onChanged: (_) {
+          // Clear previous analysis when context changes
+          if (_analysis != null) {
+            setState(() {
+              _analysis = null;
+            });
+          }
+        },
       ),
     );
   }
@@ -359,10 +403,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1D1E33),
-            Color(0xFF2D2D44),
-          ],
+          colors: [Color(0xFF1D1E33), Color(0xFF2D2D44)],
         ),
         boxShadow: [
           BoxShadow(
@@ -415,10 +456,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ),
               if (_analysis!.confidence != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: _getConfidenceColor(_analysis!.confidence!).withOpacity(0.15),
+                    color: _getConfidenceColor(
+                      _analysis!.confidence!,
+                    ).withOpacity(0.15),
                   ),
                   child: Text(
                     _analysis!.confidence!,
@@ -514,10 +560,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ),
               child: const Text(
                 'Add to Food Log',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ),
@@ -526,7 +569,13 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildNutrientRow(String label, String value, String unit, Color color, {bool isMain = false}) {
+  Widget _buildNutrientRow(
+    String label,
+    String value,
+    String unit,
+    Color color, {
+    bool isMain = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -614,9 +663,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: const Color(0xFF1D1E33),
-          border: Border.all(
-            color: const Color(0xFF00E676).withOpacity(0.3),
-          ),
+          border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3)),
         ),
         child: Column(
           children: [

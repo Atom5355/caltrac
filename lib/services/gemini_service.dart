@@ -2,9 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  static const String workerUrl = 'https://caltrac-gemini-api.ismaelhernandez5355.workers.dev';
+  static const String workerUrl =
+      'https://caltrac-gemini-api.ismaelhernandez5355.workers.dev';
 
-  static Future<NutritionAnalysis> analyzeFood(String base64Image, {String mimeType = 'image/jpeg'}) async {
+  static Future<NutritionAnalysis> analyzeFood(
+    String base64Image, {
+    String mimeType = 'image/jpeg',
+    String? additionalContext,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse(workerUrl),
@@ -12,6 +17,7 @@ class GeminiService {
         body: jsonEncode({
           'image': base64Image,
           'mimeType': mimeType,
+          if (additionalContext != null) 'context': additionalContext,
         }),
       );
 
