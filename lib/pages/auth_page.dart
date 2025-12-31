@@ -157,102 +157,104 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   }
 
   Widget _buildForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          _buildTextField(
-            controller: _emailController,
-            label: 'Email',
-            icon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email, AutofillHints.username],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!RegExp(
-                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-              ).hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _passwordController,
-            label: 'Password',
-            icon: Icons.lock_outline,
-            obscureText: _obscurePassword,
-            autofillHints: _isLogin
-                ? const [AutofillHints.password]
-                : const [AutofillHints.newPassword],
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: Colors.white.withOpacity(0.5),
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              if (value.length < 6) {
-                return 'Password must be at least 6 characters';
-              }
-              return null;
-            },
-          ),
-          if (!_isLogin) ...[
-            const SizedBox(height: 20),
+    return AutofillGroup(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
             _buildTextField(
-              controller: _confirmPasswordController,
-              label: 'Confirm Password',
-              icon: Icons.lock_outline,
-              obscureText: _obscureConfirmPassword,
-              autofillHints: const [AutofillHints.newPassword],
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureConfirmPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: Colors.white.withOpacity(0.5),
-                ),
-                onPressed: () => setState(
-                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
-                ),
-              ),
+              controller: _emailController,
+              label: 'Email',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.username],
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
+                  return 'Please enter your email';
                 }
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                if (!RegExp(
+                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ).hasMatch(value)) {
+                  return 'Please enter a valid email';
                 }
                 return null;
               },
             ),
-          ],
-          if (_isLogin) ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _handleForgotPassword,
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    color: const Color(0xFF00E676).withOpacity(0.8),
-                    fontSize: 13,
+            const SizedBox(height: 20),
+            _buildTextField(
+              controller: _passwordController,
+              label: 'Password',
+              icon: Icons.lock_outline,
+              obscureText: _obscurePassword,
+              autofillHints: _isLogin
+                  ? const [AutofillHints.password]
+                  : const [AutofillHints.newPassword],
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white.withOpacity(0.5),
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your password';
+                }
+                if (value.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                return null;
+              },
+            ),
+            if (!_isLogin) ...[
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                label: 'Confirm Password',
+                icon: Icons.lock_outline,
+                obscureText: _obscureConfirmPassword,
+                // No autofillHints here - confuses password managers
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  onPressed: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+            ],
+            if (_isLogin) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _handleForgotPassword,
+                  child: Text(
+                    'Forgot Password?',
+                    style: TextStyle(
+                      color: const Color(0xFF00E676).withOpacity(0.8),
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -267,42 +269,39 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     String? Function(String?)? validator,
     Iterable<String>? autofillHints,
   }) {
-    return AutofillGroup(
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        style: const TextStyle(color: Colors.white),
-        validator: validator,
-        autofillHints: autofillHints,
-        onEditingComplete: () => TextInput.finishAutofillContext(),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-          prefixIcon: Icon(icon, color: const Color(0xFF00E676)),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: const Color(0xFF1D1E33),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF00E676), width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
-          ),
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      autofillHints: autofillHints,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: const Color(0xFF00E676)),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: const Color(0xFF1D1E33),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF00E676), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
         ),
       ),
     );
