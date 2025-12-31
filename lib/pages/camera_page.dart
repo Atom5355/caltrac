@@ -60,7 +60,6 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           _analysis = null;
           _error = null;
         });
-        await _analyzeImage();
       }
     } catch (e) {
       setState(() => _error = 'Failed to pick image: $e');

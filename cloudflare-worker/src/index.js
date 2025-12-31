@@ -48,7 +48,7 @@ export default {
 
       // Call Gemini API with Google Search grounding enabled
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: {
@@ -110,10 +110,10 @@ Prioritize accuracy from official sources over estimates.`,
               }
             ],
             generationConfig: {
-              temperature: 0.3,
-              topK: 32,
-              topP: 1,
-              maxOutputTokens: 2048,
+              thinkingConfig: {
+                thinkingLevel: "high"
+              },
+              maxOutputTokens: 8192,
             },
           }),
         }
@@ -185,7 +185,7 @@ Prioritize accuracy from official sources over estimates.`,
 async function handleTextOnlyAnalysis(foodDescription, env) {
   try {
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
@@ -235,10 +235,10 @@ Prioritize accuracy from official sources over estimates.`,
             }
           ],
           generationConfig: {
-            temperature: 0.3,
-            topK: 32,
-            topP: 1,
-            maxOutputTokens: 2048,
+            thinkingConfig: {
+              thinkingLevel: "high"
+            },
+            maxOutputTokens: 8192,
           },
         }),
       }

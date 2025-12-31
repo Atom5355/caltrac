@@ -748,29 +748,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildCameraFAB() {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00E676).withOpacity(0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CameraPage()),
+        );
+        if (result == true) {
+          _loadData();
+        }
+      },
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF00E676), Color(0xFF00C853)],
           ),
-        ],
-      ),
-      child: FloatingActionButton.large(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CameraPage()),
-          );
-          if (result == true) {
-            _loadData();
-          }
-        },
-        backgroundColor: const Color(0xFF00E676),
-        child: const Icon(Icons.camera_alt, color: Colors.black, size: 32),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF00E676).withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.add, color: Colors.black, size: 32),
       ),
     );
   }
