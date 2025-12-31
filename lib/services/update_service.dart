@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,7 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 class UpdateService {
   static const String githubUser = 'Atom5355';
   static const String githubRepo = 'caltrac';
-  
+
   static final Dio _dio = Dio();
 
   /// Check if an update is available
@@ -27,7 +28,7 @@ class UpdateService {
         final data = response.data;
         final latestVersion = (data['tag_name'] as String).replaceAll('v', '');
         final releaseNotes = data['body'] ?? 'Bug fixes and improvements';
-        
+
         // Find APK asset
         String? downloadUrl;
         final assets = data['assets'] as List;
@@ -38,7 +39,8 @@ class UpdateService {
           }
         }
 
-        if (downloadUrl != null && _isNewerVersion(currentVersion, latestVersion)) {
+        if (downloadUrl != null &&
+            _isNewerVersion(currentVersion, latestVersion)) {
           return UpdateInfo(
             currentVersion: currentVersion,
             latestVersion: latestVersion,
@@ -76,7 +78,9 @@ class UpdateService {
     if (Platform.isAndroid) {
       final status = await Permission.requestInstallPackages.request();
       if (!status.isGranted) {
-        throw Exception('Install permission denied. Please enable it in settings.');
+        throw Exception(
+          'Install permission denied. Please enable it in settings.',
+        );
       }
     }
 
@@ -147,12 +151,11 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     });
 
     try {
-      await UpdateService.downloadAndInstall(
-        widget.info.downloadUrl,
-        (progress) {
-          setState(() => _progress = progress);
-        },
-      );
+      await UpdateService.downloadAndInstall(widget.info.downloadUrl, (
+        progress,
+      ) {
+        setState(() => _progress = progress);
+      });
     } catch (e) {
       setState(() {
         _isDownloading = false;
@@ -198,11 +201,17 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                   children: [
                     Text(
                       'Current',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       'v${widget.info.currentVersion}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -212,11 +221,17 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                   children: [
                     Text(
                       'New',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       'v${widget.info.latestVersion}',
-                      style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Color(0xFF00E676),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -226,15 +241,51 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           const SizedBox(height: 16),
           Text(
             "What's New:",
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Container(
             constraints: const BoxConstraints(maxHeight: 150),
             child: SingleChildScrollView(
-              child: Text(
-                widget.info.releaseNotes,
-                style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+              child: MarkdownBody(
+                data: widget.info.releaseNotes,
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
+                  ),
+                  h1: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  h2: const TextStyle(
+                    color: Color(0xFF00E676),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  h3: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  listBullet: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  strong: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  em: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontStyle: FontStyle.italic,
+                  ),
+                  code: TextStyle(
+                    color: const Color(0xFF00E676),
+                    backgroundColor: const Color(0xFF0A0E21),
+                  ),
+                ),
               ),
             ),
           ),
@@ -245,14 +296,19 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               child: LinearProgressIndicator(
                 value: _progress,
                 backgroundColor: const Color(0xFF0A0E21),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00E676)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFF00E676),
+                ),
                 minHeight: 8,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               '${(_progress * 100).toInt()}% - Downloading...',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+              ),
             ),
           ],
           if (_error != null) ...[
@@ -283,21 +339,29 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         if (!_isDownloading) ...[
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Later', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+            child: Text(
+              'Later',
+              style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            ),
           ),
           ElevatedButton(
             onPressed: _startDownload,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00E676),
               foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Update Now'),
           ),
         ] else ...[
           TextButton(
             onPressed: null,
-            child: Text('Please wait...', style: TextStyle(color: Colors.white.withOpacity(0.3))),
+            child: Text(
+              'Please wait...',
+              style: TextStyle(color: Colors.white.withOpacity(0.3)),
+            ),
           ),
         ],
       ],

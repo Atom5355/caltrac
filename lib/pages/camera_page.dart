@@ -100,6 +100,33 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _analyzeTextOnly() async {
+    final description = _contextController.text.trim();
+    if (description.isEmpty) {
+      setState(() => _error = 'Please describe the food you want to analyze');
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+      _error = null;
+    });
+
+    try {
+      final analysis = await GeminiService.analyzeFoodTextOnly(description);
+
+      setState(() {
+        _analysis = analysis;
+        _isAnalyzing = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isAnalyzing = false;
+      });
+    }
+  }
+
   Future<void> _saveEntry() async {
     if (_analysis == null || _analysis!.hasError) return;
 
@@ -242,7 +269,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                         return Transform.scale(
                           scale: _pulseAnimation.value,
                           child: Icon(
-                            Icons.camera_alt,
+                            Icons.restaurant_menu,
                             size: 64,
                             color: const Color(0xFF00E676).withOpacity(0.5),
                           ),
@@ -251,7 +278,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Take a photo of your food',
+                      'Take a photo or describe your food',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 16,
@@ -259,7 +286,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'AI will analyze the nutritional content',
+                      'Image is optional - you can use text only',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.3),
                         fontSize: 12,
@@ -284,13 +311,13 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         style: const TextStyle(color: Colors.white),
         maxLines: 2,
         decoration: InputDecoration(
-          hintText: 'Add details: brand, portion eaten, ingredients...',
+          hintText: 'Describe food: "Big Mac", "2 eggs scrambled", etc.',
           hintStyle: TextStyle(
             color: Colors.white.withOpacity(0.3),
             fontSize: 14,
           ),
           prefixIcon: Icon(
-            Icons.info_outline,
+            Icons.restaurant,
             color: const Color(0xFF00E676).withOpacity(0.5),
           ),
           border: InputBorder.none,
@@ -300,12 +327,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           ),
         ),
         onChanged: (_) {
-          // Clear previous analysis when context changes
-          if (_analysis != null) {
-            setState(() {
+          // Rebuild to update button state and clear analysis
+          setState(() {
+            if (_analysis != null) {
               _analysis = null;
-            });
-          }
+            }
+          });
         },
       ),
     );
@@ -633,23 +660,62 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   }
 
   Widget _buildCaptureButtons() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildCaptureButton(
-            Icons.photo_library,
-            'Gallery',
-            () => _pickImage(ImageSource.gallery),
+        Row(
+          children: [
+            Expanded(
+              child: _buildCaptureButton(
+                Icons.photo_library,
+                'Gallery',
+                () => _pickImage(ImageSource.gallery),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildCaptureButton(
+                Icons.camera_alt,
+                'Camera',
+                () => _pickImage(ImageSource.camera),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Text-only analyze button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _isAnalyzing || _contextController.text.trim().isEmpty
+                ? null
+                : _analyzeTextOnly,
+            icon: const Icon(Icons.text_fields),
+            label: const Text('Analyze with Text Only'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF00E676),
+              side: BorderSide(
+                color: _contextController.text.trim().isEmpty
+                    ? Colors.grey.withOpacity(0.3)
+                    : const Color(0xFF00E676).withOpacity(0.5),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildCaptureButton(
-            Icons.camera_alt,
-            'Camera',
-            () => _pickImage(ImageSource.camera),
+        if (_contextController.text.trim().isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Enter food description above to use text-only mode',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 12,
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
