@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'services/supabase_service.dart';
+import 'services/notification_service.dart';
 import 'pages/main_menu_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
+  await NotificationService.init();
   runApp(const MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import '../services/update_service.dart';
+import '../services/notification_service.dart';
 import 'camera_page.dart';
 import 'food_log_page.dart';
 import 'main_menu_page.dart';
@@ -43,12 +44,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
     _fadeController.forward();
     _loadData();
     _checkForUpdates();
+    _setupNotifications();
+  }
+
+  Future<void> _setupNotifications() async {
+    // Request permission and schedule weekly reminder
+    final granted = await NotificationService.requestPermissions();
+    if (granted) {
+      await NotificationService.scheduleWeeklySundayReminder();
+    }
   }
 
   Future<void> _checkForUpdates() async {
@@ -98,11 +109,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A0E21),
-              Color(0xFF1A1A2E),
-              Color(0xFF0A0E21),
-            ],
+            colors: [Color(0xFF0A0E21), Color(0xFF1A1A2E), Color(0xFF0A0E21)],
           ),
         ),
         child: SafeArea(
@@ -177,10 +184,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           children: [
             IconButton(
               onPressed: _loadData,
-              icon: Icon(
-                Icons.refresh,
-                color: Colors.white.withOpacity(0.7),
-              ),
+              icon: Icon(Icons.refresh, color: Colors.white.withOpacity(0.7)),
             ),
             PopupMenuButton<String>(
               icon: Container(
@@ -236,10 +240,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1D1E33),
-            Color(0xFF2D2D44),
-          ],
+          colors: [Color(0xFF1D1E33), Color(0xFF2D2D44)],
         ),
         boxShadow: [
           BoxShadow(
@@ -256,13 +257,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: [
               const Text(
                 'Today\'s Calories',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: const Color(0xFF00E676).withOpacity(0.15),
@@ -317,7 +318,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 20),
           Text(
-            remaining > 0 ? '$remaining kcal remaining' : '${-remaining} kcal over goal',
+            remaining > 0
+                ? '$remaining kcal remaining'
+                : '${-remaining} kcal over goal',
             style: TextStyle(
               fontSize: 14,
               color: remaining > 0 ? const Color(0xFF00E676) : Colors.orange,
@@ -365,7 +368,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMacroCard(String label, double value, double goal, String unit, Color color) {
+  Widget _buildMacroCard(
+    String label,
+    double value,
+    double goal,
+    String unit,
+    Color color,
+  ) {
     final progress = (value / goal).clamp(0.0, 1.0);
 
     return Container(
@@ -373,9 +382,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: const Color(0xFF1D1E33),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         children: [
@@ -485,7 +492,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildActionCard(IconData icon, String title, String subtitle, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -494,9 +507,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: const Color(0xFF1D1E33),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-          ),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,9 +586,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   Text(
                     'No meals logged today',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                    ),
+                    style: TextStyle(color: Colors.white.withOpacity(0.5)),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -617,10 +626,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(12),
               color: const Color(0xFF00E676).withOpacity(0.15),
             ),
-            child: const Icon(
-              Icons.restaurant,
-              color: Color(0xFF00E676),
-            ),
+            child: const Icon(Icons.restaurant, color: Color(0xFF00E676)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -693,11 +699,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }
         },
         backgroundColor: const Color(0xFF00E676),
-        child: const Icon(
-          Icons.camera_alt,
-          color: Colors.black,
-          size: 32,
-        ),
+        child: const Icon(Icons.camera_alt, color: Colors.black, size: 32),
       ),
     );
   }
@@ -735,10 +737,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDialogField(nameController, 'Food Name', TextInputType.text),
-              _buildDialogField(caloriesController, 'Calories', TextInputType.number),
-              _buildDialogField(proteinController, 'Protein (g)', TextInputType.number),
-              _buildDialogField(carbsController, 'Carbs (g)', TextInputType.number),
+              _buildDialogField(
+                nameController,
+                'Food Name',
+                TextInputType.text,
+              ),
+              _buildDialogField(
+                caloriesController,
+                'Calories',
+                TextInputType.number,
+              ),
+              _buildDialogField(
+                proteinController,
+                'Protein (g)',
+                TextInputType.number,
+              ),
+              _buildDialogField(
+                carbsController,
+                'Carbs (g)',
+                TextInputType.number,
+              ),
               _buildDialogField(fatController, 'Fat (g)', TextInputType.number),
             ],
           ),
@@ -746,7 +764,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white.withOpacity(0.5)),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -764,7 +785,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00E676)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00E676),
+            ),
             child: const Text('Add', style: TextStyle(color: Colors.black)),
           ),
         ],
@@ -772,7 +795,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildDialogField(TextEditingController controller, String label, TextInputType type) {
+  Widget _buildDialogField(
+    TextEditingController controller,
+    String label,
+    TextInputType type,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
