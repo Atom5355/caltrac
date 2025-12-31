@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class UpdateService {
-  static const String githubUser = 'ismaelhernandez5355';
+  static const String githubUser = 'Atom5355';
   static const String githubRepo = 'caltrac';
   
   static final Dio _dio = Dio();
