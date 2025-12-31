@@ -69,6 +69,58 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _manualCheckForUpdates() async {
+    // Show loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Checking for updates...'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1D1E33),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    final updateInfo = await UpdateService.checkForUpdate();
+
+    if (!mounted) return;
+
+    // Clear the loading snackbar
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (updateInfo != null) {
+      UpdateService.showUpdateDialog(context, updateInfo);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Text('You\'re on the latest version!'),
+            ],
+          ),
+          backgroundColor: const Color(0xFF00E676),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -206,9 +258,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               onSelected: (value) {
                 if (value == 'logout') {
                   _handleLogout();
+                } else if (value == 'check_updates') {
+                  _manualCheckForUpdates();
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'check_updates',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.system_update,
+                        color: Color(0xFF00E676),
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Check for Updates',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem(
                   value: 'logout',
                   child: Row(
